@@ -1,16 +1,16 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
+	"fmt"
+	"log"
 	"os"
 
+	"github.com/playwright-community/playwright-go"
 	"github.com/spf13/cobra"
 )
-
-
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -24,7 +24,53 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		test()
+	},
+}
+
+func getPlaywrightInstance() (*playwright.Playwright, error) {
+	pw, err := playwright.Run()
+	if err != nil {
+		fmt.Println("Playwright installation not found, would you like to install it?")
+		var input string
+		fmt.Print("Enter (y) to install: ")
+		fmt.Scan(&input)
+
+		if input == "y" {
+			playwright.Install()
+			return playwright.Run()
+		}
+	}
+
+	return pw, err
+}
+
+func test() {
+	pw, err := getPlaywrightInstance()
+	if err != nil {
+		log.Fatalf("could not start playwright: %v", err)
+	}
+
+	browser, err := pw.Chromium.Launch()
+	if err != nil {
+		log.Fatalf("could not launch browser: %v", err)
+	}
+
+	page, err := browser.NewPage()
+	if err != nil {
+		log.Fatalf("could not create page: %v", err)
+	}
+
+	if _, err = page.Goto("https://myringgo.co.uk/account/login"); err != nil {
+		log.Fatalf("could not goto: %v", err)
+	}
+
+	content, err := page.Content()
+	if err != nil {
+		log.Fatalf("could not get page content: %v", err)
+	}
+	fmt.Print(content)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -47,5 +93,3 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-
